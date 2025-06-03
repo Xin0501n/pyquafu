@@ -11,10 +11,20 @@ class SurfaceCodeVisualizer:
     def add_qubit(self, x, y, qtype="data", idx=None):
         self.qubits[(x, y)] = {'type': qtype, 'idx': idx}
 
-    def add_gate(self, gate_type, qubit_positions, time_step=1):
+    def add_gate(self, gate_type, qubit_positions, time_step=1, angle=None):
         if time_step not in self.gates_by_time:
             self.gates_by_time[time_step] = []
-        self.gates_by_time[time_step].append({'type': gate_type.upper(), 'qubits': qubit_positions})
+
+        gate_data = {
+            'type': gate_type.upper(),
+            'qubits': qubit_positions
+        }
+
+        if angle is not None:
+            gate_data['angle'] = angle
+
+        self.gates_by_time[time_step].append(gate_data)
+
 
     def draw(self, time_step=0):
         fig, ax = plt.subplots(figsize=(8, 8))
@@ -25,7 +35,7 @@ class SurfaceCodeVisualizer:
         for y in range(self.grid_size[1]):
             ax.axhline(y, color='lightgray', linestyle='--', linewidth=0.5)
 
-        # qubits
+        # 绘制所有 qubit（不分时间步）
         for (x, y), props in self.qubits.items():
             if props['type'] == 'data':
                 ax.add_patch(patches.Circle((x, y), 0.1, color='blue'))
@@ -36,11 +46,9 @@ class SurfaceCodeVisualizer:
             if props['idx'] is not None:
                 ax.text(x, y + 0.25, f"{props['idx']}", ha='center', fontsize=8)
 
-        # gates only up to time_step
-        for t in sorted(self.gates_by_time.keys()):
-            if t > time_step:
-                continue
-            for gate in self.gates_by_time[t]:
+        # 只绘制当前 time_step 的门
+        if time_step in self.gates_by_time:
+            for gate in self.gates_by_time[time_step]:
                 if gate['type'] == 'CX' and len(gate['qubits']) == 2:
                     (x1, y1), (x2, y2) = gate['qubits']
                     # control
@@ -52,7 +60,18 @@ class SurfaceCodeVisualizer:
                     # line between
                     ax.add_line(lines.Line2D([x1, x2], [y1, y2], color='black'))
 
-                # Add more gate types ---------- TODO
+                elif gate['type'] in {'RX', 'RY', 'RZ'} and len(gate['qubits']) == 1:
+                    (x, y) = gate['qubits'][0]
+                    angle = gate.get('angle', '?')
+                    label = f'R{gate["type"][-1]}({angle})'
+                    width = 0.8
+                    height = 0.4
+                    rect = patches.Rectangle((x - width / 2, y - height / 2), width, height,
+                                            linewidth=1, edgecolor='black', facecolor='white')
+                    ax.add_patch(rect)
+                    ax.text(x, y, label, ha='center', va='center', fontsize=8)
+
+                # TODO: 其他类型门
 
         ax.set_xlim(-1, self.grid_size[0])
         ax.set_ylim(-1, self.grid_size[1])
@@ -61,6 +80,7 @@ class SurfaceCodeVisualizer:
         ax.set_yticks(range(self.grid_size[1]))
         ax.grid(False)
         plt.show()
+
 
     def load_standard_distance_3(self):
         # D: data, A: ancilla

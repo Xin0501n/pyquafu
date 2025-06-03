@@ -101,8 +101,9 @@ class SurfaceCodeCircuitBuilder:
     def run(self):
         if self.sim_mode == "full":
             syndrome_result = simulate(self.qc_syndrome, shots=1, simulator="statevector")
-            logical_result = simulate(self.qc_logical, shots=1, simulator="statevector")
-            return syndrome_result.counts, logical_result.counts
+            logical_x_result = simulate(self.qc_logical_x, shots=1, simulator="statevector")
+            logical_z_result = simulate(self.qc_logical_z, shots=1, simulator="statevector")
+            return syndrome_result.counts, logical_x_result.counts, logical_z_result.counts
 
         elif self.sim_mode == "clifford":
             # not finished
