@@ -82,11 +82,21 @@ class SurfaceCodeCircuitBuilder:
         self.qc_syndrome.measure(ancilla_qubits, classical_indices)
 
         # 测逻辑X或Z ----------- Z TODO
-        self.qc_logical = copy.deepcopy(self.qc)
-        logical_qubits = [0, 2] if self.distance == 2 else [1, 4, 7]
-        for q in logical_qubits:
-            self.qc_logical.h(q)
-        self.qc_logical.measure(logical_qubits, list(range(len(logical_qubits))))
+        self.qc_logical_x = copy.deepcopy(self.qc)
+        if self.distance == 2:
+            logical_x_qubits = [0, 2] 
+        elif self.distance == 3:
+            logical_x_qubits = [1, 4, 7]
+        for q in logical_x_qubits:
+            self.qc_logical_x.h(q)
+        self.qc_logical_x.measure(logical_x_qubits, list(range(len(logical_x_qubits))))
+
+        self.qc_logical_z = copy.deepcopy(self.qc)
+        if self.distance == 2:
+            logical_z_qubits = [0, 2] 
+        elif self.distance == 3:
+            logical_z_qubits = [1, 4, 7]
+        self.qc_logical_z.measure(logical_z_qubits, list(range(len(logical_z_qubits))))
 
     def run(self):
         if self.sim_mode == "full":
